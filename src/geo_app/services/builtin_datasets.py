@@ -7,33 +7,37 @@ from geo_app.db import DuckDBManager
 from geo_app.models.schemas import BuiltinDataset
 from geo_app.services.ingestion import ingest_file
 
+_NE_BASE = (
+    "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson"
+)
+
 BUILTIN_CATALOG: list[BuiltinDataset] = [
     BuiltinDataset(
         id="ne-countries-110m",
         name="Natural Earth Countries (110m)",
         description="Country boundaries at 1:110m scale",
-        url="https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.geojson",
+        url=f"{_NE_BASE}/ne_110m_admin_0_countries.geojson",
         format="geojson",
     ),
     BuiltinDataset(
         id="ne-populated-places-110m",
         name="Natural Earth Populated Places (110m)",
         description="Major populated places at 1:110m scale",
-        url="https://naciscdn.org/naturalearth/110m/cultural/ne_110m_populated_places_simple.geojson",
+        url=f"{_NE_BASE}/ne_110m_populated_places_simple.geojson",
         format="geojson",
     ),
     BuiltinDataset(
         id="ne-rivers-110m",
         name="Natural Earth Rivers (110m)",
         description="Major rivers and lake centerlines at 1:110m scale",
-        url="https://naciscdn.org/naturalearth/110m/physical/ne_110m_rivers_lake_centerlines.geojson",
+        url=f"{_NE_BASE}/ne_110m_rivers_lake_centerlines.geojson",
         format="geojson",
     ),
     BuiltinDataset(
         id="ne-lakes-110m",
         name="Natural Earth Lakes (110m)",
         description="Major lakes at 1:110m scale",
-        url="https://naciscdn.org/naturalearth/110m/physical/ne_110m_lakes.geojson",
+        url=f"{_NE_BASE}/ne_110m_lakes.geojson",
         format="geojson",
     ),
 ]
@@ -62,7 +66,8 @@ async def load_builtin(
     # Download to upload dir
     download_path = settings.upload_dir / f"{builtin.id}.{builtin.format}"
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    headers = {"User-Agent": "duckdb-geo-demo/0.1.0"}
+    async with httpx.AsyncClient(timeout=120.0, headers=headers) as client:
         resp = await client.get(builtin.url, follow_redirects=True)
         resp.raise_for_status()
         download_path.write_bytes(resp.content)

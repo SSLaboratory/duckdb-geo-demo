@@ -47,7 +47,8 @@ async def ingest_from_url(request: Request, body: IngestFromURLRequest) -> Inges
     download_path = settings.upload_dir / filename
 
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        headers = {"User-Agent": "duckdb-geo-demo/0.1.0"}
+        async with httpx.AsyncClient(timeout=120.0, headers=headers) as client:
             resp = await client.get(body.url, follow_redirects=True)
             resp.raise_for_status()
             download_path.write_bytes(resp.content)
