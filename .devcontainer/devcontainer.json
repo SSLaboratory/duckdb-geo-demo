@@ -1,0 +1,191 @@
+{
+  "name": "SPD Development Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "postCreateCommand": "devcontainer-scripts/setup",
+
+  // Run arguments for the container
+  "runArgs": [
+    // Mount docker socket for docker-compose access from inside container
+    "-v", "/var/run/docker.sock:/var/run/docker.sock"
+  ],
+
+  // Set container user
+  "remoteUser": "vscode",
+
+  // Mount the parent folder to /workspace
+  "workspaceFolder": "/workspace",
+
+  // Mount the workspace folder
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+//
+//  // Forward ports for development services
+//  "forwardPorts": [
+//    5173,  // Frontend Vite dev server
+//    8000,  // Backend FastAPI server
+//    5432   // PostgreSQL database
+//  ],
+//
+//  // Port labels for clarity
+//  "portsAttributes": {
+//    "5173": {
+//      "label": "Frontend (Vite)",
+//      "onAutoForward": "notify"
+//    },
+//    "8000": {
+//      "label": "Backend (FastAPI)",
+//      "onAutoForward": "notify"
+//    },
+//    "5432": {
+//      "label": "PostgreSQL",
+//      "onAutoForward": "silent"
+//    }
+//  },
+//
+//  // Features to add to the container
+//  "features": {
+//    // Docker-in-Docker for running docker-compose
+//    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+//      "version": "latest",
+//      "moby": true,
+//      "dockerDashComposeVersion": "v2"
+//    },
+//    // Git configuration
+//    "ghcr.io/devcontainers/features/git:1": {
+//      "version": "latest",
+//      "ppa": false
+//    },
+//    // Common utilities
+//    "ghcr.io/devcontainers/features/common-utils:2": {
+//      "installZsh": false,
+//      "installOhMyZsh": false,
+//      "configureZshAsDefaultShell": false,
+//      "username": "vscode",
+//      "userUid": "1000",
+//      "userGid": "1000"
+//    }
+//  },
+//
+//  // Environment variables
+//  "containerEnv": {
+//    "PYTHONUNBUFFERED": "1",
+//    "PYTHONDONTWRITEBYTECODE": "1",
+//    "NODE_ENV": "development",
+//    // PostgreSQL connection for development (when using docker-compose)
+//    "DATABASE_URL": "postgresql://spd_user:spd_password@localhost:5432/spd_db"
+//  },
+//
+//  // VS Code customizations
+//  "customizations": {
+//    "vscode": {
+//      // Extensions to install
+//      "extensions": [
+//        // Frontend
+//        "esbenp.prettier-vscode",
+//        "dbaeumer.vscode-eslint",
+//        // Backend
+//        "ms-python.python",
+//        "ms-python.vscode-pylance",
+//        "charliermarsh.ruff",
+//        // General
+//        "editorconfig.editorconfig",
+//        "streetsidesoftware.code-spell-checker",
+//        "github.vscode-pull-request-github",
+//        "eamodio.gitlens",
+//        // Container support
+//        "ms-vscode-remote.remote-containers",
+//        // Make support
+//        "ms-vscode.makefile-tools"
+//      ],
+//
+//      // Settings
+//      "settings": {
+//        // Python
+//        "python.defaultInterpreterPath": "/workspace/apps/backend/.venv/bin/python",
+//        "python.linting.enabled": true,
+//        "python.linting.ruffEnabled": true,
+//        "python.formatting.provider": "none",
+//        "[python]": {
+//          "editor.defaultFormatter": "charliermarsh.ruff",
+//          "editor.formatOnSave": false,
+//          "editor.codeActionsOnSave": {
+//            "source.organizeImports": "explicit"
+//          }
+//        },
+//
+//        // JavaScript/TypeScript
+//        "[javascript]": {
+//          "editor.defaultFormatter": "esbenp.prettier-vscode",
+//          "editor.formatOnSave": false
+//        },
+//        "[javascriptreact]": {
+//          "editor.defaultFormatter": "esbenp.prettier-vscode",
+//          "editor.formatOnSave": false
+//        },
+//        "[typescript]": {
+//          "editor.defaultFormatter": "esbenp.prettier-vscode",
+//          "editor.formatOnSave": false
+//        },
+//        "[typescriptreact]": {
+//          "editor.defaultFormatter": "esbenp.prettier-vscode",
+//          "editor.formatOnSave": false
+//        },
+//
+//        // JSON/YAML
+//        "[json]": {
+//          "editor.defaultFormatter": "esbenp.prettier-vscode",
+//          "editor.formatOnSave": false
+//        },
+//        "[jsonc]": {
+//          "editor.defaultFormatter": "esbenp.prettier-vscode",
+//          "editor.formatOnSave": false
+//        },
+//        "[yaml]": {
+//          "editor.defaultFormatter": "esbenp.prettier-vscode",
+//          "editor.formatOnSave": false
+//        },
+//
+//        // Markdown
+//        "[markdown]": {
+//          "editor.defaultFormatter": "esbenp.prettier-vscode",
+//          "editor.formatOnSave": false
+//        },
+//
+//        // Terminal
+//        "terminal.integrated.defaultProfile.linux": "bash",
+//
+//        // Files
+//        "files.watcherExclude": {
+//          "**/node_modules/**": true,
+//          "**/.venv/**": true,
+//          "**/__pycache__/**": true,
+//          "**/.pytest_cache/**": true,
+//          "**/.ruff_cache/**": true
+//        }
+//      }
+//    }
+//  },
+
+  // Container user - ensures we run as vscode user
+  "containerUser": "vscode",
+
+  // Update remote user UID to match
+  "updateRemoteUserUID": true,
+
+  // Post-start command: Fix permissions on mounted volumes
+  "postStartCommand": "sudo chown -R vscode:vscode /workspace /home/vscode/.cache 2>/dev/null || true",
+//
+//  // Mount points (additional)
+//  "mounts": [
+//    // Cache for npm to speed up installs
+//    "source=spd-node-modules,target=/workspace/apps/frontend/node_modules,type=volume",
+//    // Cache for pip to speed up installs
+//    "source=spd-pip-cache,target=/home/vscode/.cache/pip,type=volume",
+//    // Cache for mise to speed up installs
+//    "source=spd-mise-cache,target=/home/vscode/.cache/mise,type=volume",
+//    // Git config from host
+//    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
+//  ]
+}

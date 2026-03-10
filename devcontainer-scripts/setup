@@ -1,0 +1,41 @@
+#!/bin/bash
+# Setup script for devcontainer - runs after container creation
+# This runs as vscode user (configured via remoteUser in devcontainer.json)
+
+set -e
+
+echo "🚀 Setting up development environment..."
+echo "User: $(whoami)"
+echo "Home: $HOME"
+echo "Workspace: /workspace"
+
+# Fix workspace permissions (must be owned by vscode user)
+echo "🔧 Fixing workspace permissions..."
+sudo chown -R vscode:vscode /workspace 2>/dev/null || true
+
+# Ensure mise cache directory exists and is owned by vscode
+echo "📁 Setting up mise cache..."
+mkdir -p "$HOME/.cache/mise"
+sudo chown -R vscode:vscode "$HOME/.cache" 2>/dev/null || true
+
+# Install mise tools
+echo "📦 Installing mise tools (Node, Python, PostgreSQL)..."
+cd /workspace
+
+# Trust and install mise configuration
+if [ -f ".mise.toml" ]; then
+    $HOME/.local/bin/mise trust
+    $HOME/.local/bin/mise install
+    echo "✅ Mise tools installed successfully"
+else
+    echo "⚠️  Warning: .mise.toml not found in /workspace"
+fi
+
+# Verify installations
+echo ""
+echo "🔍 Verifying installed tools..."
+$HOME/.local/bin/mise list || true
+
+echo ""
+echo "✅ Setup complete!"
+
