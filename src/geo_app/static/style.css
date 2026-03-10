@@ -1,0 +1,90 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; height: 100vh; }
+
+#sidebar {
+    width: 340px;
+    background: #1a1a2e;
+    color: #eee;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+}
+
+#sidebar h1 { font-size: 18px; color: #e94560; margin-bottom: 4px; }
+#sidebar h2 { font-size: 14px; color: #aaa; font-weight: 400; margin-bottom: 8px; }
+#sidebar h3 { font-size: 13px; color: #ccc; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.section { background: #16213e; border-radius: 8px; padding: 12px; }
+
+#map { flex: 1; }
+
+button {
+    background: #e94560;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    width: 100%;
+    transition: background 0.2s;
+}
+button:hover { background: #c73e54; }
+button:disabled { background: #555; cursor: not-allowed; }
+
+input[type="file"] { font-size: 12px; color: #ccc; margin-bottom: 8px; }
+
+select {
+    width: 100%;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    background: #0f3460;
+    color: #eee;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.dataset-item {
+    background: #0f3460;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.dataset-item:hover { background: #1a4a7a; }
+.dataset-item .name { font-size: 13px; font-weight: 500; }
+.dataset-item .meta { font-size: 11px; color: #888; }
+.dataset-item .delete-btn {
+    background: none;
+    border: none;
+    color: #e94560;
+    cursor: pointer;
+    font-size: 16px;
+    width: auto;
+    padding: 2px 6px;
+}
+
+#status {
+    font-size: 12px;
+    color: #7ec8e3;
+    min-height: 18px;
+}
+
+.maplibregl-popup-content {
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+.maplibregl-popup-content table { border-collapse: collapse; }
+.maplibregl-popup-content td, .maplibregl-popup-content th {
+    padding: 2px 6px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}

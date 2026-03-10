@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuckDB Geo Demo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+</head>
+<body>
+    <div id="sidebar">
+        <div>
+            <h1>DuckDB Geo Demo</h1>
+            <h2>GeoParquet Data Pipeline</h2>
+        </div>
+
+        <div class="section">
+            <h3>Upload Data</h3>
+            <input type="file" id="fileInput" accept=".geojson,.json,.csv,.shp,.parquet">
+            <button id="uploadBtn" onclick="uploadFile()">Upload</button>
+        </div>
+
+        <div class="section">
+            <h3>Built-in Datasets</h3>
+            <select id="builtinSelect"></select>
+            <button id="loadBuiltinBtn" onclick="loadBuiltin()">Load Dataset</button>
+        </div>
+
+        <div class="section">
+            <h3>Datasets</h3>
+            <div id="datasetList"><em>No datasets loaded</em></div>
+        </div>
+
+        <div id="status"></div>
+    </div>
+    <div id="map"></div>
+    <script src="app.js"></script>
+</body>
+</html>
