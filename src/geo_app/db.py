@@ -1,10 +1,20 @@
+import logging
 import threading
 from collections.abc import Generator
 from contextlib import contextmanager
+from pathlib import Path
 
 import duckdb
 
 from geo_app.config import Settings
+from geo_app.naming import is_valid_dataset_name
+
+logger = logging.getLogger(__name__)
+
+
+def quote_literal(value: str | Path) -> str:
+    """Render a value as a single-quoted SQL string literal."""
+    return "'" + str(value).replace("'", "''") + "'"
 
 
 class DuckDBManager:
@@ -15,11 +25,19 @@ class DuckDBManager:
 
     def initialize(self) -> None:
         self._conn = duckdb.connect(str(self._settings.duckdb_path))
-        ext_dir = str(self._settings.extensions_dir)
-        self._conn.execute(f"SET extension_directory = '{ext_dir}'")
+        ext_dir = self._settings.extensions_dir
+        self._conn.execute(f"SET extension_directory = {quote_literal(ext_dir)}")
         self._conn.execute("INSTALL spatial")
         self._conn.execute("LOAD spatial")
         self._init_metadata_table()
+        self._apply_sandbox()
+
+    def _apply_sandbox(self) -> None:
+        # Must run after LOAD spatial: disabling external access blocks extension loading
+        allowed = str(self._settings.data_dir).rstrip("/") + "/"
+        self._conn.execute("SET allowed_directories = ?", [[allowed]])
+        self._conn.execute("SET enable_external_access = false")
+        self._conn.execute("SET lock_configuration = true")
 
     def _init_metadata_table(self) -> None:
         self._conn.execute("""
@@ -41,11 +59,14 @@ class DuckDBManager:
         rows = self._conn.execute("SELECT name FROM _datasets").fetchall()
         parquet_dir = self._settings.parquet_dir
         for (name,) in rows:
+            if not is_valid_dataset_name(name):
+                logger.warning("Skipping dataset with invalid name: %r", name)
+                continue
             parquet_path = parquet_dir / f"{name}.parquet"
             if parquet_path.exists():
                 self._conn.execute(
                     f'CREATE OR REPLACE VIEW "{name}" AS '
-                    f"SELECT * FROM read_parquet('{parquet_path}')"
+                    f"SELECT * FROM read_parquet({quote_literal(parquet_path)})"
                 )
 
     @contextmanager

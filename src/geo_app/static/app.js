@@ -11,6 +11,7 @@ map.addControl(new maplibregl.NavigationControl());
 
 const activeLayers = new Set();
 let popup = null;
+let readOnly = false;
 
 function setStatus(msg) {
     document.getElementById('status').textContent = msg;
@@ -106,7 +107,7 @@ async function refreshDatasets() {
                     <div class="name">${ds.name}</div>
                     <div class="meta">${ds.feature_count || '?'} features &middot; ${ds.geometry_type || 'unknown'}</div>
                 </div>
-                <button class="delete-btn" onclick="event.stopPropagation(); deleteDataset('${ds.name}')">&times;</button>
+                ${readOnly ? '' : `<button class="delete-btn" onclick="event.stopPropagation(); deleteDataset('${ds.name}')">&times;</button>`}
             `;
             item.onclick = () => loadDatasetOnMap(ds.name);
             list.appendChild(item);
@@ -216,8 +217,20 @@ function randomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
+// Hide write controls when the server runs with READ_ONLY=true
+async function loadServerMode() {
+    try {
+        const resp = await fetch('/health');
+        readOnly = Boolean((await resp.json()).read_only);
+    } catch (e) {
+        readOnly = false;
+    }
+    document.getElementById('uploadSection').hidden = readOnly;
+}
+
 // Initialize
-map.on('load', () => {
+map.on('load', async () => {
+    await loadServerMode();
     loadBuiltinOptions();
     refreshDatasets();
 });

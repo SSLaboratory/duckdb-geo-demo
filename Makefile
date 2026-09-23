@@ -11,7 +11,7 @@ build:
 	docker build -t duckdb-geo-demo .
 
 run:
-	docker run --rm -p 8000:8000 -v /tmp/data:/data duckdb-geo-demo
+	docker run --rm -p 8000:8000 -e READ_ONLY=false -v /tmp/data:/data duckdb-geo-demo
 
 lint:
 	ruff check src/ tests/

@@ -28,8 +28,6 @@ async def bbox_query(
         return query_bbox(db, dataset, minx, miny, maxx, maxy, min(limit, 10000))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from None
 
 
 @router.post("/nearest")
@@ -39,8 +37,6 @@ async def nearest_query(request: Request, body: NearestQuery) -> dict[str, Any]:
         return query_nearest(db, body.dataset, body.lon, body.lat, body.k)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from None
 
 
 @router.post("/spatial-join")
@@ -52,8 +48,6 @@ async def spatial_join_query(request: Request, body: SpatialJoinQuery) -> dict[s
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from None
 
 
 @router.post("/filter")
@@ -63,5 +57,3 @@ async def filter_query(request: Request, body: FilterQuery) -> dict[str, Any]:
         return query_filter(db, body.dataset, body.filters, body.limit)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from None

@@ -1,9 +1,11 @@
 import json
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from geo_app.dependencies import require_writable
 from geo_app.models.schemas import DatasetInfo, DatasetList
+from geo_app.naming import is_valid_dataset_name
 
 router = APIRouter(prefix="/api/datasets", tags=["datasets"])
 
@@ -77,15 +79,14 @@ async def get_dataset_geojson(
 ) -> dict[str, Any]:
     db = request.app.state.db
 
+    if not is_valid_dataset_name(name):
+        raise HTTPException(status_code=400, detail="Invalid dataset name")
+
     # Verify dataset exists
     with db.read_cursor() as cur:
         exists = cur.execute("SELECT 1 FROM _datasets WHERE name = ?", [name]).fetchone()
         if not exists:
             raise HTTPException(status_code=404, detail=f"Dataset '{name}' not found")
-
-        # Build query
-        if not name.replace("_", "").replace("-", "").isalnum():
-            raise HTTPException(status_code=400, detail="Invalid dataset name")
 
         base = (
             f'SELECT * EXCLUDE(geometry), ST_AsGeoJSON(geometry) AS geojson_geometry FROM "{name}"'
@@ -131,18 +132,18 @@ async def get_dataset_geojson(
     return {"type": "FeatureCollection", "features": features}
 
 
-@router.delete("/{name}")
+@router.delete("/{name}", dependencies=[Depends(require_writable)])
 async def delete_dataset(request: Request, name: str) -> dict[str, str]:
     db = request.app.state.db
     settings = request.app.state.settings
+
+    if not is_valid_dataset_name(name):
+        raise HTTPException(status_code=400, detail="Invalid dataset name")
 
     with db.write_cursor() as cur:
         exists = cur.execute("SELECT 1 FROM _datasets WHERE name = ?", [name]).fetchone()
         if not exists:
             raise HTTPException(status_code=404, detail=f"Dataset '{name}' not found")
-
-        if not name.replace("_", "").replace("-", "").isalnum():
-            raise HTTPException(status_code=400, detail="Invalid dataset name")
 
         cur.execute(f'DROP VIEW IF EXISTS "{name}"')
         cur.execute("DELETE FROM _datasets WHERE name = ?", [name])

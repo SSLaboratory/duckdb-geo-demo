@@ -1,4 +1,6 @@
+import ipaddress
 import json
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -67,3 +69,34 @@ def ingested_dataset(app: TestClient, sample_geojson: Path) -> str:
         resp = app.post("/api/ingest/upload", files={"file": ("sample.geojson", f)})
     assert resp.status_code == 200
     return resp.json()["dataset_name"]
+
+
+@pytest.fixture()
+def readonly_app(data_dir: Path) -> TestClient:
+    application = create_app(Settings(data_dir=data_dir, read_only=True))
+    with TestClient(application) as client:
+        yield client
+
+
+@pytest.fixture()
+def app_no_raise(settings: Settings) -> TestClient:
+    """Client that returns 500 responses instead of re-raising server exceptions."""
+    application = create_app(settings)
+    with TestClient(application, raise_server_exceptions=False) as client:
+        yield client
+
+
+@pytest.fixture()
+def fake_dns(monkeypatch: pytest.MonkeyPatch) -> Callable[..., None]:
+    """Replace DNS resolution in safe_fetch so tests never touch the network."""
+
+    def set_addresses(*addresses: str) -> None:
+        async def _resolve(host: str, port: int) -> list[str]:
+            try:
+                return [str(ipaddress.ip_address(host))]  # IP literals resolve to themselves
+            except ValueError:
+                return list(addresses)
+
+        monkeypatch.setattr("geo_app.services.safe_fetch._resolve", _resolve)
+
+    return set_addresses

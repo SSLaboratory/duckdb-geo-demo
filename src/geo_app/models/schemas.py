@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from geo_app.naming import DATASET_NAME_PATTERN
+
 
 class DatasetInfo(BaseModel):
     name: str
@@ -26,8 +28,8 @@ class IngestResponse(BaseModel):
 
 
 class IngestFromURLRequest(BaseModel):
-    url: str
-    name: str | None = None
+    url: str = Field(max_length=2048)
+    name: str | None = Field(default=None, pattern=DATASET_NAME_PATTERN)
 
 
 class BboxQuery(BaseModel):

@@ -1,12 +1,17 @@
 from pathlib import Path
+from urllib.parse import urlsplit
 
-import httpx
-from fastapi import APIRouter, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 
+from geo_app.dependencies import require_writable
 from geo_app.models.schemas import IngestFromURLRequest, IngestResponse
-from geo_app.services.ingestion import ingest_file, sanitize_name
+from geo_app.naming import sanitize_name
+from geo_app.services.ingestion import ingest_file, new_upload_path
+from geo_app.services.safe_fetch import DownloadTooLargeError, download_to_file
 
-router = APIRouter(prefix="/api/ingest", tags=["ingest"])
+router = APIRouter(prefix="/api/ingest", tags=["ingest"], dependencies=[Depends(require_writable)])
+
+_CHUNK_SIZE = 1024 * 1024
 
 
 @router.post("/upload", response_model=IngestResponse)
@@ -17,9 +22,23 @@ async def upload_file(request: Request, file: UploadFile) -> IngestResponse:
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
 
-    upload_path = settings.upload_dir / file.filename
-    content = await file.read()
-    upload_path.write_bytes(content)
+    # The client filename is untrusted: it only supplies the extension and a label
+    try:
+        upload_path = new_upload_path(settings, file.filename)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from None
+
+    written = 0
+    try:
+        with upload_path.open("wb") as fh:
+            while chunk := await file.read(_CHUNK_SIZE):
+                written += len(chunk)
+                if written > settings.max_upload_bytes:
+                    raise HTTPException(status_code=413, detail="File exceeds MAX_UPLOAD_MB")
+                fh.write(chunk)
+    except BaseException:
+        upload_path.unlink(missing_ok=True)
+        raise
 
     try:
         result = ingest_file(
@@ -28,7 +47,7 @@ async def upload_file(request: Request, file: UploadFile) -> IngestResponse:
             file_path=upload_path,
             original_filename=file.filename,
         )
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
 
     return IngestResponse(**result)
@@ -39,21 +58,17 @@ async def ingest_from_url(request: Request, body: IngestFromURLRequest) -> Inges
     settings = request.app.state.settings
     db = request.app.state.db
 
-    # Derive filename from URL
-    url_path = Path(body.url.split("?")[0].split("#")[0])
-    filename = url_path.name or "download"
+    filename = Path(urlsplit(body.url).path).name or "download"
     name = body.name or sanitize_name(filename)
 
-    download_path = settings.upload_dir / filename
-
     try:
-        headers = {"User-Agent": "duckdb-geo-demo/0.1.0"}
-        async with httpx.AsyncClient(timeout=120.0, headers=headers) as client:
-            resp = await client.get(body.url, follow_redirects=True)
-            resp.raise_for_status()
-            download_path.write_bytes(resp.content)
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=400, detail=f"Download failed: {e}") from None
+        download_path = new_upload_path(settings, filename)
+        await download_to_file(body.url, download_path, settings.max_upload_bytes)
+    except DownloadTooLargeError as e:
+        raise HTTPException(status_code=413, detail=str(e)) from None
+    except ValueError as e:
+        # UnsafeURLError / DownloadError messages are generated here, not by upstream
+        raise HTTPException(status_code=400, detail=str(e)) from None
 
     try:
         result = ingest_file(
@@ -63,7 +78,7 @@ async def ingest_from_url(request: Request, body: IngestFromURLRequest) -> Inges
             original_filename=filename,
             dataset_name=name,
         )
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from None
 
     return IngestResponse(**result)

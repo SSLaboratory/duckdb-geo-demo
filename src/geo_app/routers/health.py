@@ -22,4 +22,5 @@ async def health(request: Request) -> dict[str, Any]:
         "duckdb_version": version,
         "spatial_loaded": spatial_loaded,
         "dataset_count": dataset_count,
+        "read_only": request.app.state.settings.read_only,
     }

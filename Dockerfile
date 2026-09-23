@@ -20,6 +20,8 @@ COPY --from=builder /app/src /app/src
 WORKDIR /app
 ENV PYTHONPATH=/app/src
 ENV DATA_DIR=/data
+# Public image is read-only by default; set READ_ONLY=false to enable ingest/delete
+ENV READ_ONLY=true
 
 RUN mkdir -p /data && chown appuser:appuser /data
 
