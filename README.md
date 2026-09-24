@@ -126,7 +126,7 @@ All configuration is via environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DATA_DIR` | `/data` | Root directory for all persistent state |
-| `READ_ONLY` | `false` (container image: `true`) | Disables upload, URL ingest and dataset deletion (`403`). Querying and built-in datasets still work. The public demo runs read-only. |
+| `READ_ONLY` | `false` (container image: `true`) | Disables upload, URL ingest and dataset deletion (`403`). Querying and built-in datasets still work. |
 | `MAX_UPLOAD_MB` | `100` | Maximum size of an uploaded or downloaded file |
 
 Derived paths (not configurable separately):

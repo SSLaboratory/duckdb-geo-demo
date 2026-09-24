@@ -1,11 +1,11 @@
-# System Review: FEAT-001 — Security Hardening + Read-Only Public Demo
+# System Review: FEAT-001 — Security Hardening + Read-Only Mode
 
 ## Summary
 
 - **Execution Report**: `.features/execution-reports/feat-001-security-hardening-read-only-demo.md`
 - **Original Plan**: `.features/plans/feat-001-security-hardening-read-only-demo.md`
 - **PRD Sections Analyzed**: none. **The repo has no PRD** (`references/PRD.md` does not exist). The requirements baseline used instead:
-  - The user's request: fix review items 1–3 and 5, and make the public demo read-only.
+  - The user's request: fix review items 1–3 and 5, and make the container image read-only by default.
   - The pre-publication security review in this session.
   - `CLAUDE.md` conventions (Security, Storage, Error handling, Testing).
 - **Assessment Date**: 2026-09-23
@@ -90,7 +90,7 @@
 
 #### Update 1: Create a minimal PRD
 - **Section**: new `references/PRD.md`
-- **Content**: purpose (public portfolio demo), deployment modes (read-only public vs writable local), supported formats, the security invariants listed under CLAUDE.md Additions below, and non-goals (multi-user auth).
+- **Content**: purpose (portfolio code sample, LAN-only deployment), deployment modes (read-only image default vs writable), supported formats, the security invariants listed under CLAUDE.md Additions below, and non-goals (multi-user auth).
 - **Rationale**: the system-review command expects one. Without it, reviews fall back to chat history.
 
 ### plan-feature Command Improvements

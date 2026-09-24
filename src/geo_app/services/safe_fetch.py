@@ -2,7 +2,7 @@
 
 Every hop (including redirects) must resolve only to globally routable addresses.
 Residual risk: DNS rebinding between validation and connect is not prevented; the
-public deployment runs READ_ONLY, which disables user-supplied URL ingestion.
+READ_ONLY mode (the container image default) disables user-supplied URL ingestion.
 """
 
 import asyncio

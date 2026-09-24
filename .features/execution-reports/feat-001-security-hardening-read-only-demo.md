@@ -1,4 +1,4 @@
-# Execution Report: FEAT-001 — Security Hardening + Read-Only Public Demo
+# Execution Report: FEAT-001 — Security Hardening + Read-Only Mode
 
 **Date:** 2026-09-23
 **Branch:** `fix/feat-001-security-hardening`

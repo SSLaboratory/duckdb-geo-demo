@@ -12,7 +12,7 @@
 
 ## Done
 
-- **FEAT-001** — Pre-publication security hardening: upload path traversal + SQL injection, dataset-name injection, SSRF on URL ingest, error-detail leakage, and a `READ_ONLY` mode for the public demo (image default). Also sandboxes DuckDB to `DATA_DIR`. Completed 2026-09-23 on branch `fix/feat-001-security-hardening`.
+- **FEAT-001** — Pre-publication security hardening: upload path traversal + SQL injection, dataset-name injection, SSRF on URL ingest, error-detail leakage, and a `READ_ONLY` mode (image default). Also sandboxes DuckDB to `DATA_DIR`. Completed 2026-09-23 on branch `fix/feat-001-security-hardening`.
   - Plan: `.features/plans/feat-001-security-hardening-read-only-demo.md`
   - Report: `.features/execution-reports/feat-001-security-hardening-read-only-demo.md`
   - Assessment: `.features/assessments/feat-001-security-hardening-read-only-demo-assessment.md`

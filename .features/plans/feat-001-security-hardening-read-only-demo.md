@@ -1,4 +1,4 @@
-# Feature: FEAT-001 — Security Hardening + Read-Only Public Demo
+# Feature: FEAT-001 — Security Hardening + Read-Only Mode
 
 **Created:** 2026-09-23 at 18:40 UTC
 **Plan Version:** 1.0
@@ -8,13 +8,13 @@ The following plan should be complete, but validate documentation and codebase p
 
 ## Feature Description
 
-Close the vulnerabilities found in the pre-publication security review before `duckdb-geo-demo` goes public on GitHub. Fixes: (1) upload path traversal and SQL injection via the uploaded filename, (2) SQL injection via the user-supplied dataset `name`, (3) SSRF (server-side request forgery) in `/api/ingest/from-url`, and (5) internal exception text returned to clients. Item (4), unauthenticated writes, is addressed with a `READ_ONLY` mode that the public deployment runs in. As defense in depth, the DuckDB connection is also sandboxed to `DATA_DIR`.
+Close the vulnerabilities found in the pre-publication security review before `duckdb-geo-demo` goes public on GitHub. Fixes: (1) upload path traversal and SQL injection via the uploaded filename, (2) SQL injection via the user-supplied dataset `name`, (3) SSRF (server-side request forgery) in `/api/ingest/from-url`, and (5) internal exception text returned to clients. Item (4), unauthenticated writes, is addressed with a `READ_ONLY` mode, which the container image enables by default. As defense in depth, the DuckDB connection is also sandboxed to `DATA_DIR`.
 
 ## User Story
 
-As the operator of a public portfolio demo
-I want the app's write paths to be injection-proof and the public deployment to be read-only
-So that publishing the source doesn't hand anyone a working exploit against the live site or its internal network
+As the maintainer of a published demo project
+I want the app's write paths to be injection-proof and the default image to be read-only
+So that anyone running the published code or image gets a safe default
 
 ## Feature Metadata
 
@@ -128,7 +128,7 @@ Execute every task in order, top to bottom.
     - Reject early if `Content-Length` > max. Otherwise stream `aiter_bytes()` into `dest`, counting bytes, and raise `DownloadTooLargeError` once over max.
     - `httpx.HTTPError` → `DownloadError("Download failed")` with no exception text.
     - On any exception, `dest.unlink(missing_ok=True)` and re-raise.
-- **GOTCHA**: Residual DNS-rebinding TOCTOU (check and connect resolve separately) is accepted. Document it in a module docstring line. The public deployment is read-only, so this endpoint is disabled there anyway. Never include the exception text or the resolved IP in error messages: they would turn the endpoint into a port scanner.
+- **GOTCHA**: Residual DNS-rebinding TOCTOU (check and connect resolve separately) is accepted. Document it in a module docstring line. Read-only mode (the image default) disables this endpoint. Never include the exception text or the resolved IP in error messages: they would turn the endpoint into a port scanner.
 - **VALIDATE**: `ruff check src/geo_app/services/safe_fetch.py && python -c "import geo_app.services.safe_fetch"`
 
 ### Task 6: UPDATE `src/geo_app/services/ingestion.py`
@@ -179,7 +179,7 @@ Execute every task in order, top to bottom.
 - **UPDATE** `load_builtin`:
   - First, if `_datasets` already has the target name and `parquet_dir/{name}.parquet` exists, return the stored metadata in the same dict shape as `ingest_file` and don't download. This keeps the builtin loader idempotent, so repeated public clicks can't be used to drive bandwidth or disk use.
   - Otherwise download with `download_to_file(builtin.url, download_path, settings.max_upload_bytes)` in place of the raw `httpx` call.
-- **KEY LOGIC**: `/api/builtins/load` stays available in read-only mode. It only fetches the 4 hardcoded Natural Earth URLs into fixed names, and the public demo needs it to show data.
+- **KEY LOGIC**: `/api/builtins/load` stays available in read-only mode. It only fetches the 4 hardcoded Natural Earth URLs into fixed names, and a read-only deployment needs it to show data.
 - **UPDATE** the router: keep `ValueError` → 404 for an unknown id. For `DownloadError`/`DownloadTooLargeError` (subclasses of `ValueError`, so catch them first) → 502 `"Failed to fetch built-in dataset"`. **REMOVE** `except Exception → 500 str(e)`.
 - **VALIDATE**: `pytest tests/test_builtin_datasets.py -q`
 
@@ -206,7 +206,7 @@ Execute every task in order, top to bottom.
 - **app.js**: add `let readOnly = false;`. On startup, `fetch('/health')` and set `readOnly`; if true, `document.getElementById('uploadSection').hidden = true`. In `refreshDatasets`, only render the delete button when `!readOnly`. Keep the no-build vanilla-JS style.
 - **Dockerfile**: add `ENV READ_ONLY=true` next to `ENV DATA_DIR=/data`, so the published image is read-only by default.
 - **Makefile**: `run:` adds `-e READ_ONLY=false`, so the local container stays usable. `dev` is unchanged (defaults to writable).
-- **README.md**: document `READ_ONLY` (default false; image default true) and `MAX_UPLOAD_MB` (default 100). State that the public demo runs read-only and that only built-in datasets can be loaded there.
+- **README.md**: document `READ_ONLY` (default false; image default true) and `MAX_UPLOAD_MB` (default 100). State that in read-only mode only built-in datasets can be loaded.
 - **VALIDATE**: `pytest tests/test_health.py -q && grep -q 'READ_ONLY=true' Dockerfile`
 
 ### Task 15: UPDATE `tests/conftest.py` and CREATE `tests/test_security.py`
